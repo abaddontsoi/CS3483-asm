@@ -1,19 +1,9 @@
-import * as p5 from 'p5';
+var img;
 
-new p5((p) => {
-  p.setup = () => {
-    p.createCanvas(p.windowWidth, p.windowHeight);
-    p.background(240);
-  };
-
-  p.draw = () => {
-    if (p.mouseIsPressed) {
-      p.fill(0, 100);
-      p.circle(p.mouseX, p.mouseY, 40);
-    }
-  };
-
-  p.windowResized = () => {
-    p.resizeCanvas(p.windowWidth, p.windowHeight);
-  };
-});
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+    img = loadImage('./assets/Amogus.png')
+}
+function draw() {
+    image(img, 0, 0, img.width, img.height)
+}
