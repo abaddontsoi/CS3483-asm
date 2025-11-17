@@ -38,8 +38,8 @@ var pixelView = [0, 0, 0];
 
 function preload() {
     handPose = ml5.handPose(options);
-    img = loadImage('./assets/Amogus.png');
-    blurImg = loadImage('./assets/Amogus.png');
+    img = loadImage('./Amogus.png');
+    blurImg = loadImage('./Amogus.png');
 }
 
 function setup() {
