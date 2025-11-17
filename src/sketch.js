@@ -4,7 +4,9 @@ var videoFeed;
 
 var handPose;
 
-// index finger tip keypoint coordinate drawn on canva 
+// index finger tip keypoint coordinate drawn on image 
+// mapped from video region to image
+// origin is (img.width, 0)
 var displayx;
 var displayy;
 
@@ -13,11 +15,11 @@ var options = {
     flipped: true,
 }
 var detections = [];
-var viewMode = false;
+var viewMode = true;
 var freeHandMode = false;
 var circleMode = false;
 
-var viewBoxSize = 10;
+var viewBoxSize = 60;
 
 function preload() {
     handPose = ml5.handPose(options);
@@ -38,9 +40,11 @@ function setup() {
 function draw() {
     if (viewMode) {
         clear(0, 0, img.width, img.height);
-        let croppedImg = cropImage(img, displayx, displayy, viewBoxSize, viewBoxSize);
+        let croppedImg = cropImage(img, displayx + img.width, displayy, viewBoxSize, viewBoxSize);
         image(blurImg, 0, 0, blurImg.width, blurImg.height);
-        image(croppedImg, displayx, displayy, croppedImg.width, croppedImg.height);
+        if (detections.length > 0) {
+            image(croppedImg, displayx + img.width - viewBoxSize / 2, displayy - viewBoxSize/2, viewBoxSize, viewBoxSize);
+        }
     } else {
         push();
         image(img, 0, 0, img.width, img.height);
@@ -64,8 +68,9 @@ function gotResults(results) {
 }
 
 function drawKeypoints(detections) {
+    push();
     noStroke();
-    fill(255, 0, 0);
+    fill(0, 255, 0);
     translate(img.width, 0);
     for (let detection of detections) {
         let index_finger_tip = detection.index_finger_tip;
@@ -81,6 +86,7 @@ function drawKeypoints(detections) {
         circle(displayx, displayy, 10);
         circle(displayx + img.width, displayy, 10);
     }
+    pop();
 }
 
 function switchMode(key) {
@@ -112,6 +118,7 @@ function switchMode(key) {
 // return a unblured portion of image for a region of (box_width, boxheight) on (x, y)
 function cropImage(img, x, y, box_width, box_height) {
     // top-left coordinate of view box
+    console.log(x, y);
     let dx = Math.max(x - box_width/2, 0);
     let dy = Math.max(y - box_height/2, 0);
 
