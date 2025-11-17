@@ -7,6 +7,8 @@ var handPose;
 // index finger tip keypoint coordinate drawn on image 
 // mapped from video region to image
 // origin is (img.width, 0)
+var pdisplayx;
+var pdisplayy;
 var displayx;
 var displayy;
 
@@ -17,8 +19,9 @@ var options = {
 var detections = [];
 
 // changing mode
-// 1 for view mode, 2 for freehand mode, 3 for circle mode
-var mode = 1;
+// 1 for view mode, 2 for freehand mode, 3 for circle mode, 0 means do not apply any mode
+var mode = 0;
+var freeHandImgSet = false;
 
 var viewBoxSize = 60;
 
@@ -49,6 +52,13 @@ function draw() {
             }
             break;
         case 2:
+            if (!freeHandImgSet) {
+                image(img, 0, 0, img.width, img.height);
+                freeHandImgSet = true;
+            }
+            stroke(0, 255, 0);
+            strokeWeight(10);
+            line(displayx, displayy, pdisplayx, pdisplayy);
             break;
         case 3:
             break;
@@ -89,6 +99,8 @@ function drawKeypoints(detections) {
         // Convert to relative coordinates
         var relx = pt.x / videoFeed.width;
         var rely = pt.y / videoFeed.height;
+        pdisplayx = displayx;
+        pdisplayy = displayy;
         displayx = relx * (img.width);
         displayy = rely * (img.height);
         circle(displayx, displayy, 10);
@@ -110,6 +122,7 @@ function switchMode(key) {
             break;
         case 'e':
             mode = 0;
+            freeHandImgSet = false;
             break;
         default:
             break;
