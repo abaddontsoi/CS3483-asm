@@ -7,23 +7,33 @@ var handPose;
 // index finger tip keypoint coordinate drawn on image 
 // mapped from video region to image
 // origin is (img.width, 0)
-var pdisplayx;
-var pdisplayy;
-var displayx;
-var displayy;
+var pdisplayx = 0;
+var pdisplayy = 0;
+var displayx = 0;
+var displayy = 0;
 
 var options = {
     maxHands: 1,
     flipped: true,
 }
 var detections = [];
+var index_finger = {
+    x: 0,
+    y: 0.
+};
+var thumb = {
+    x: 0,
+    y: 0.
+};
 
 // changing mode
 // 1 for view mode, 2 for freehand mode, 3 for circle mode, 0 means do not apply any mode
 var mode = 0;
 var freeHandImgSet = false;
-
 var viewBoxSize = 60;
+// r, g, b
+var pixelColor = [0, 0, 0];
+
 
 function preload() {
     handPose = ml5.handPose(options);
@@ -45,27 +55,40 @@ function draw() {
     switch (mode) {
         case 1:
             clear(0, 0, img.width, img.height);
-            let croppedImg = cropImage(img, displayx, displayy, viewBoxSize, viewBoxSize);
             image(blurImg, 0, 0, blurImg.width, blurImg.height);
+            let croppedImg = cropImage(img, displayx, displayy, viewBoxSize, viewBoxSize);
             if (detections.length > 0) {
                 image(croppedImg, displayx - viewBoxSize / 2, displayy - viewBoxSize / 2, viewBoxSize, viewBoxSize);
             }
             break;
         case 2:
+            // Reset to original image
             if (!freeHandImgSet) {
+                clear(0, 0, img.width, img.height);
                 image(img, 0, 0, img.width, img.height);
                 freeHandImgSet = true;
             }
             stroke(0, 255, 0);
             strokeWeight(10);
-            line(displayx, displayy, pdisplayx, pdisplayy);
+            // Only draw when index finger is tracked
+            if (displayx && displayy && pdisplayx && pdisplayy) {
+                line(displayx, displayy, pdisplayx, pdisplayy);
+            }
             break;
         case 3:
+            // Reset to original image
+            clear(0, 0, img.width, img.height);
+            image(img, 0, 0, blurImg.width, blurImg.height);
+            // get pixel color of image
+            pixelColor = img.get(displayx, displayy);
             break;
-        default:
+        // On exit
+        case 0:
             push();
             image(img, 0, 0, img.width, img.height);
             pop();
+            break;
+        default:
             break;
     }
     push();
@@ -73,8 +96,8 @@ function draw() {
     scale(-1, 1);
     image(videoFeed, -img.width, 0, img.width, img.height);
     pop();
-    if (detections) {
-        drawKeypoints(detections);
+    if (detections.length > 0) {
+        drawIndicator();
     }
     if (keyIsPressed) {
         switchMode(key);
@@ -83,33 +106,54 @@ function draw() {
 
 function gotResults(results) {
     detections = results;
+    // Only care about the first detection
+    if (detections.length > 0) {
+        let detection = detections[0];
+        let index_finger_tip = detection.index_finger_tip;
+        let thumb_tip = detection.thumb_tip;
+        index_finger = {
+            x: index_finger_tip.x || null,
+            y: index_finger_tip.y || null,
+        }
+        thumb = {
+            x: thumb_tip.x || null,
+            y: thumb_tip.y || null,
+        }
+    } else {
+        index_finger = null;
+        thumb = null;
+    }
 }
 
-function drawKeypoints(detections) {
+function drawIndicator() {
     push();
     noStroke();
     fill(0, 255, 0);
-    // translate(img.width, 0);
-    for (let detection of detections) {
-        let index_finger_tip = detection.index_finger_tip;
-        let pt = {
-            x: index_finger_tip.x,
-            y: index_finger_tip.y,
-        }
+    if (index_finger) {
         // Convert to relative coordinates
-        var relx = pt.x / videoFeed.width;
-        var rely = pt.y / videoFeed.height;
+        var relx = index_finger.x / videoFeed.width;
+        var rely = index_finger.y / videoFeed.height;
         pdisplayx = displayx;
         pdisplayy = displayy;
         displayx = relx * (img.width);
         displayy = rely * (img.height);
         circle(displayx, displayy, 10);
         circle(displayx + img.width, displayy, 10);
+    } else {
+        pdisplayx = null;
+        pdisplayy = null;
+        displayx = null;
+        displayy = null;
     }
     pop();
 }
 
 function switchMode(key) {
+    freeHandImgSet = false;
+    pdisplayx = null;
+    pdisplayy = null;
+    displayx = null;
+    displayy = null;
     switch (key) {
         case 'v':
             mode = 1;
@@ -122,7 +166,6 @@ function switchMode(key) {
             break;
         case 'e':
             mode = 0;
-            freeHandImgSet = false;
             break;
         default:
             break;
@@ -136,11 +179,6 @@ function cropImage(img, x, y, box_width, box_height) {
     let dy = y - box_height / 2;
 
     return img.get(dx, dy, box_width, box_height);
-}
-
-// Freehand drawing
-function freeHandDrawing() {
-
 }
 
 function circleDrawing() {
