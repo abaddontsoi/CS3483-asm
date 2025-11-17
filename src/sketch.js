@@ -11,6 +11,7 @@ var pdisplayx = 0;
 var pdisplayy = 0;
 var displayx = 0;
 var displayy = 0;
+var indicatorColor = [0, 255, 0];
 
 var options = {
     maxHands: 1,
@@ -32,7 +33,7 @@ var mode = 0;
 var freeHandImgSet = false;
 var viewBoxSize = 60;
 // r, g, b
-var pixelColor = [0, 0, 0];
+var pixelView = [0, 0, 0];
 
 
 function preload() {
@@ -68,23 +69,37 @@ function draw() {
                 image(img, 0, 0, img.width, img.height);
                 freeHandImgSet = true;
             }
+            push();
             stroke(0, 255, 0);
             strokeWeight(10);
             // Only draw when index finger is tracked
             if (displayx && displayy && pdisplayx && pdisplayy) {
                 line(displayx, displayy, pdisplayx, pdisplayy);
             }
+            pop();
             break;
         case 3:
             // Reset to original image
             clear(0, 0, img.width, img.height);
             image(img, 0, 0, blurImg.width, blurImg.height);
+            push();
             // get pixel color of image
-            pixelColor = img.get(displayx, displayy);
+            pixelView = img.get(displayx, displayy);
+            // Set opacity
+            pixelView[3] = 120;
+            // Calculate radius
+            if (index_finger && thumb) {
+                let radius = dist(index_finger.x, index_finger.y, thumb.x, thumb.y) * 0.5;
+                fill(pixelView);
+                noStroke();
+                circle(displayx, displayy, radius);
+            }
+            pop();
             break;
         // On exit
         case 0:
             push();
+            clear(0, 0, img.width, img.height);
             image(img, 0, 0, img.width, img.height);
             pop();
             break;
@@ -119,16 +134,20 @@ function gotResults(results) {
             x: thumb_tip.x || null,
             y: thumb_tip.y || null,
         }
-    } else {
-        index_finger = null;
-        thumb = null;
     }
 }
 
 function drawIndicator() {
     push();
-    noStroke();
-    fill(0, 255, 0);
+    // Change indicator color
+    if (mode == 3) {
+        indicatorColor = pixelView.slice(0, 3);
+        strokeWeight(1);
+    } else {
+        indicatorColor = [0, 255, 0];
+        noStroke();
+    }
+    fill(indicatorColor);
     if (index_finger) {
         // Convert to relative coordinates
         var relx = index_finger.x / videoFeed.width;
@@ -140,8 +159,8 @@ function drawIndicator() {
         circle(displayx, displayy, 10);
         circle(displayx + img.width, displayy, 10);
     } else {
-        pdisplayx = null;
-        pdisplayy = null;
+        // pdisplayx = null;
+        // pdisplayy = null;
         displayx = null;
         displayy = null;
     }
@@ -179,8 +198,4 @@ function cropImage(img, x, y, box_width, box_height) {
     let dy = y - box_height / 2;
 
     return img.get(dx, dy, box_width, box_height);
-}
-
-function circleDrawing() {
-
 }
