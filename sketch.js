@@ -6,7 +6,7 @@ var handPose;
 
 // index finger tip keypoint coordinate drawn on image 
 // mapped from video region to image
-// origin is (img.width, 0)
+
 var pdisplayx = 0;
 var pdisplayy = 0;
 var displayx = 0;
@@ -20,11 +20,11 @@ var options = {
 var detections = [];
 var index_finger = {
     x: 0,
-    y: 0.
+    y: 0
 };
 var thumb = {
     x: 0,
-    y: 0.
+    y: 0
 };
 
 // changing mode
@@ -159,8 +159,6 @@ function drawIndicator() {
         circle(displayx, displayy, 10);
         circle(displayx + img.width, displayy, 10);
     } else {
-        // pdisplayx = null;
-        // pdisplayy = null;
         displayx = null;
         displayy = null;
     }
